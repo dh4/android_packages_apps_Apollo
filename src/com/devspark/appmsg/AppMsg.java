@@ -25,7 +25,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.andrew.apollo.R;
+import com.dh4.apollo.R;
 
 /**
  * In-layout notifications. Based on {@link android.widget.Toast} notifications 
