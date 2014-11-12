@@ -34,7 +34,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_alignParentLeft="true"
-                android:scaleType="fitXY" />
+                android:scaleType="centerCrop" />
 
             <ImageView
                 android:layout_width="@dimen/shadow_height"
@@ -133,7 +133,8 @@
                     android:id="@+id/audio_player_switch_album_art"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:visibility="invisible" />
+                    android:visibility="invisible"
+                    android:scaleType="centerCrop" />
             </FrameLayout>
         </LinearLayout>
 

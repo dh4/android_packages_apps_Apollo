@@ -40,7 +40,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="left|center"
-            android:background="@drawable/default_artwork" />
+            android:background="@drawable/default_artwork"
+            android:scaleType="centerCrop" />
 
         <RelativeLayout
             android:id="@+id/bottom_action_bar_info_container"

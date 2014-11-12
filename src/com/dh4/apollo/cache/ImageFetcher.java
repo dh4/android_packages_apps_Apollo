@@ -154,9 +154,13 @@ public class ImageFetcher extends ImageWorker {
      * Used to fetch the current artwork.
      */
     public void loadCurrentArtwork(final ImageView imageView) {
-        loadImage(generateAlbumCacheKey(MusicUtils.getAlbumName(), MusicUtils.getArtistName()),
+        if (!loadImage(generateAlbumCacheKey(MusicUtils.getAlbumName(), MusicUtils.getArtistName()),
                 MusicUtils.getArtistName(), MusicUtils.getAlbumName(), MusicUtils.getCurrentAlbumId(),
-                imageView, ImageType.ALBUM);
+                imageView, ImageType.ALBUM)) {
+            //If album art not found, load artist image.
+            loadImage(MusicUtils.getArtistName(), MusicUtils.getArtistName(), null, -1,
+                    imageView, ImageType.ARTIST);
+        }
     }
 
     /**
@@ -259,6 +263,13 @@ public class ImageFetcher extends ImageWorker {
         }
         if (artwork != null) {
             return artwork;
+        } else { // If no album art found, look for artist image instead
+            if (artistName != null && mImageCache != null) {
+                artwork = mImageCache.getBitmapFromDiskCache(artistName);
+            }
+            if (artwork != null) {
+                return artwork;
+            }
         }
         return getDefaultArtwork();
     }

@@ -379,11 +379,12 @@ public abstract class ImageWorker {
      * @param imageView The {@link ImageView} used to set the cached
      *            {@link Bitmap}.
      * @param imageType The type of image URL to fetch for.
+     * @return Returns false if image not loaded.
      */
-    protected void loadImage(final String key, final String artistName, final String albumName,
+    protected boolean loadImage(final String key, final String artistName, final String albumName,
             final long albumId, final ImageView imageView, final ImageType imageType) {
         if (key == null || mImageCache == null || imageView == null) {
-            return;
+            return false;
         }
         // First, check the memory for the image
         final Bitmap lruBitmap = mImageCache.getBitmapFromMemCache(key);
@@ -404,7 +405,9 @@ public abstract class ImageWorker {
                 // Executor has exhausted queue space, show default artwork
                 imageView.setImageBitmap(getDefaultArtwork());
             }
+            return false;
         }
+        return true;
     }
 
     /**
