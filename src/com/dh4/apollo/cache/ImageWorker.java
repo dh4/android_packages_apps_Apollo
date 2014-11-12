@@ -246,6 +246,11 @@ public abstract class ImageWorker {
                 addBitmapToCache(mKey, bitmap);
             }
 
+            // If now playing and no album artwork found, load artist image as backup
+            if (bitmap == null && params[4] == "True") {
+                bitmap = mImageCache.getCachedBitmap(params[1]);
+            }
+
             // Add the second layer to the transiation drawable
             if (bitmap != null) {
                 final BitmapDrawable layerTwo = new BitmapDrawable(mResources, bitmap);
@@ -379,12 +384,13 @@ public abstract class ImageWorker {
      * @param imageView The {@link ImageView} used to set the cached
      *            {@link Bitmap}.
      * @param imageType The type of image URL to fetch for.
-     * @return Returns false if image not loaded.
+     * @param "True" if loading image for now playing
      */
-    protected boolean loadImage(final String key, final String artistName, final String albumName,
-            final long albumId, final ImageView imageView, final ImageType imageType) {
+    protected void loadImage(final String key, final String artistName, final String albumName,
+            final long albumId, final ImageView imageView, final ImageType imageType,
+            final String nowPlaying) {
         if (key == null || mImageCache == null || imageView == null) {
-            return false;
+            return;
         }
         // First, check the memory for the image
         final Bitmap lruBitmap = mImageCache.getBitmapFromMemCache(key);
@@ -400,14 +406,17 @@ public abstract class ImageWorker {
             imageView.setImageDrawable(asyncDrawable);
             try {
                 ApolloUtils.execute(false, bitmapWorkerTask, key,
-                        artistName, albumName, String.valueOf(albumId));
+                        artistName, albumName, String.valueOf(albumId), nowPlaying);
             } catch (RejectedExecutionException e) {
                 // Executor has exhausted queue space, show default artwork
                 imageView.setImageBitmap(getDefaultArtwork());
             }
-            return false;
         }
-        return true;
+    }
+
+    protected void loadImage(final String key, final String artistName, final String albumName,
+            final long albumId, final ImageView imageView, final ImageType imageType) {
+        loadImage(key, artistName, albumName, albumId, imageView, imageType, "False");
     }
 
     /**

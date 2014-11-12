@@ -154,13 +154,9 @@ public class ImageFetcher extends ImageWorker {
      * Used to fetch the current artwork.
      */
     public void loadCurrentArtwork(final ImageView imageView) {
-        if (!loadImage(generateAlbumCacheKey(MusicUtils.getAlbumName(), MusicUtils.getArtistName()),
+        loadImage(generateAlbumCacheKey(MusicUtils.getAlbumName(), MusicUtils.getArtistName()),
                 MusicUtils.getArtistName(), MusicUtils.getAlbumName(), MusicUtils.getCurrentAlbumId(),
-                imageView, ImageType.ALBUM)) {
-            //If album art not found, load artist image.
-            loadImage(MusicUtils.getArtistName(), MusicUtils.getArtistName(), null, -1,
-                    imageView, ImageType.ARTIST);
-        }
+                imageView, ImageType.ALBUM, "True");
     }
 
     /**
