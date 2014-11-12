@@ -124,20 +124,24 @@ public class RecentWidgetService extends RemoteViewsService {
             // Create the remote views
             mViews = new RemoteViews(mContext.getPackageName(), R.layout.app_widget_recents_items);
 
-            // Copy the album id
+            // Copy the song id
             final long id = mCursor.getLong(mCursor
                     .getColumnIndexOrThrow(RecentStoreColumns.ID));
 
-            // Copy the album name
-            final String albumName = mCursor.getString(mCursor
-                    .getColumnIndexOrThrow(RecentStoreColumns.ALBUMNAME));
+            // Copy the song name
+            final String songName = mCursor.getString(mCursor
+                    .getColumnIndexOrThrow(RecentStoreColumns.SONGNAME));
 
             // Copy the artist name
             final String artist = mCursor.getString(mCursor
                     .getColumnIndexOrThrow(RecentStoreColumns.ARTISTNAME));
 
-            // Set the album names
-            mViews.setTextViewText(R.id.app_widget_recents_line_one, albumName);
+            // Copy the album name
+            final String albumName = mCursor.getString(mCursor
+                    .getColumnIndexOrThrow(RecentStoreColumns.ALBUMNAME));
+
+            // Set the song names
+            mViews.setTextViewText(R.id.app_widget_recents_line_one, songName);
             // Set the artist names
             mViews.setTextViewText(R.id.app_widget_recents_line_two, artist);
             // Set the album art
@@ -153,7 +157,7 @@ public class RecentWidgetService extends RemoteViewsService {
             final Intent profileIntent = new Intent();
             final Bundle profileExtras = new Bundle();
             profileExtras.putLong(Config.ID, id);
-            profileExtras.putString(Config.NAME, albumName);
+            profileExtras.putString(Config.NAME, songName);
             profileExtras.putString(Config.ARTIST_NAME, artist);
             profileExtras.putString(RecentWidgetProvider.SET_ACTION,
                     RecentWidgetProvider.OPEN_PROFILE);
@@ -200,8 +204,8 @@ public class RecentWidgetService extends RemoteViewsService {
                     RecentStoreColumns.NAME,
                     new String[] {
                             RecentStoreColumns.ID + " as id", RecentStoreColumns.ID,
-                            RecentStoreColumns.ALBUMNAME, RecentStoreColumns.ARTISTNAME,
-                            RecentStoreColumns.ALBUMSONGCOUNT, RecentStoreColumns.ALBUMYEAR,
+                            RecentStoreColumns.SONGNAME, RecentStoreColumns.ARTISTNAME,
+                            RecentStoreColumns.ALBUMNAME, RecentStoreColumns.DURATION,
                             RecentStoreColumns.TIMEPLAYED
                     }, null, null, null, null, RecentStoreColumns.TIMEPLAYED + " DESC");
         }

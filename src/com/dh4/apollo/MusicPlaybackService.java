@@ -1344,9 +1344,8 @@ public class MusicPlaybackService extends Service {
                         getArtistName());
             }
             // Add the track to the recently played list.
-            mRecentsCache.addAlbumId(getAlbumId(), getAlbumName(), getArtistName(),
-                    MusicUtils.getSongCountForAlbum(this, getAlbumId()),
-                    MusicUtils.getReleaseDateForAlbum(this, getAlbumId()));
+            mRecentsCache.addSongId(getSongId(), getTrackName(), getArtistName(),
+                    getAlbumName(), duration() / 1000);
         } else if (what.equals(QUEUE_CHANGED)) {
             saveQueue(true);
             if (isPlaying()) {
@@ -1397,8 +1396,7 @@ public class MusicPlaybackService extends Service {
                     .editMetadata(true)
                     .putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, getArtistName())
                     .putString(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST,
-                            getAlbumArtistName())
-                    .putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, getAlbumName())
+                            getArtistName())
                     .putString(MediaMetadataRetriever.METADATA_KEY_TITLE, getTrackName())
                     .putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration())
                     .putBitmap(RemoteControlClient.MetadataEditor.BITMAP_KEY_ARTWORK, albumArt)
@@ -1843,6 +1841,20 @@ public class MusicPlaybackService extends Service {
             }
         }
         return -1;
+    }
+
+    /**
+      * Returns the song ID
+      *
+      * @return The current song ID
+      */
+    public long getSongId() {
+        synchronized (this) {
+            if (mCursor == null) {
+                return -1;
+            }
+            return mCursor.getLong(mCursor.getColumnIndexOrThrow(AudioColumns._ID));
+        }
     }
 
     /**

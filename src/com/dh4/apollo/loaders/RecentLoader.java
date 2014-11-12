@@ -15,7 +15,7 @@ import android.content.Context;
 import android.database.Cursor;
 
 import com.dh4.apollo.R;
-import com.dh4.apollo.model.Album;
+import com.dh4.apollo.model.Song;
 import com.dh4.apollo.provider.RecentStore;
 import com.dh4.apollo.provider.RecentStore.RecentStoreColumns;
 import com.dh4.apollo.utils.Lists;
@@ -28,12 +28,12 @@ import java.util.List;
  * 
  * @author Andrew Neal (andrewdneal@gmail.com)
  */
-public class RecentLoader extends WrappedAsyncTaskLoader<List<Album>> {
+public class RecentLoader extends WrappedAsyncTaskLoader<List<Song>> {
 
     /**
      * The result
      */
-    private final ArrayList<Album> mAlbumsList = Lists.newArrayList();
+    private final ArrayList<Song> mSongsList = Lists.newArrayList();
 
     /**
      * The {@link Cursor} used to run the query.
@@ -53,37 +53,37 @@ public class RecentLoader extends WrappedAsyncTaskLoader<List<Album>> {
      * {@inheritDoc}
      */
     @Override
-    public List<Album> loadInBackground() {
+    public List<Song> loadInBackground() {
         // Create the Cursor
         mCursor = makeRecentCursor(getContext());
         // Gather the data
         if (mCursor != null && mCursor.moveToFirst()) {
             do {
-                // Copy the album id
+                // Copy the song id
                 final long id = mCursor.getLong(mCursor
                         .getColumnIndexOrThrow(RecentStoreColumns.ID));
 
-                // Copy the album name
-                final String albumName = mCursor.getString(mCursor
-                        .getColumnIndexOrThrow(RecentStoreColumns.ALBUMNAME));
+                // Copy the song name
+                final String songName = mCursor.getString(mCursor
+                        .getColumnIndexOrThrow(RecentStoreColumns.SONGNAME));
 
                 // Copy the artist name
                 final String artist = mCursor.getString(mCursor
                         .getColumnIndexOrThrow(RecentStoreColumns.ARTISTNAME));
 
-                // Copy the number of songs
-                final int songCount = mCursor.getInt(mCursor
-                        .getColumnIndexOrThrow(RecentStoreColumns.ALBUMSONGCOUNT));
+                // Copy the album name
+                final String album = mCursor.getString(mCursor
+                        .getColumnIndexOrThrow(RecentStoreColumns.ALBUMNAME));
 
-                // Copy the release year
-                final String year = mCursor.getString(mCursor
-                        .getColumnIndexOrThrow(RecentStoreColumns.ALBUMYEAR));
+                // Copy the song duration
+                final int duration = mCursor.getInt(mCursor
+                        .getColumnIndexOrThrow(RecentStoreColumns.DURATION));
 
                 // Create a new album
-                final Album album = new Album(id, albumName, artist, songCount, year);
+                final Song song = new Song(id, songName, artist, album, duration);
 
                 // Add everything up
-                mAlbumsList.add(album);
+                mSongsList.add(song);
             } while (mCursor.moveToNext());
         }
         // Close the cursor
@@ -91,7 +91,7 @@ public class RecentLoader extends WrappedAsyncTaskLoader<List<Album>> {
             mCursor.close();
             mCursor = null;
         }
-        return mAlbumsList;
+        return mSongsList;
     }
 
     /**
@@ -106,9 +106,9 @@ public class RecentLoader extends WrappedAsyncTaskLoader<List<Album>> {
                 .getReadableDatabase()
                 .query(RecentStoreColumns.NAME,
                         new String[] {
-                                RecentStoreColumns.ID + " as id", RecentStoreColumns.ID,
-                                RecentStoreColumns.ALBUMNAME, RecentStoreColumns.ARTISTNAME,
-                                RecentStoreColumns.ALBUMSONGCOUNT, RecentStoreColumns.ALBUMYEAR,
+                                RecentStoreColumns.ID + " as _id", RecentStoreColumns.ID,
+                                RecentStoreColumns.SONGNAME, RecentStoreColumns.ARTISTNAME,
+                                RecentStoreColumns.ALBUMNAME, RecentStoreColumns.DURATION,
                                 RecentStoreColumns.TIMEPLAYED
                         }, null, null, null, null, RecentStoreColumns.TIMEPLAYED + " DESC");
     }

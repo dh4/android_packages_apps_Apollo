@@ -161,9 +161,7 @@ public class MusicBrowserPhoneFragment extends Fragment implements
         // Shuffle all
         inflater.inflate(R.menu.shuffle, menu);
         // Sort orders
-        if (isRecentPage()) {
-            inflater.inflate(R.menu.view_as, menu);
-        } else if (isArtistPage()) {
+        if (isArtistPage()) {
             inflater.inflate(R.menu.artist_sort_by, menu);
             inflater.inflate(R.menu.view_as, menu);
         } else if (isAlbumPage()) {
@@ -268,9 +266,7 @@ public class MusicBrowserPhoneFragment extends Fragment implements
                 }
                 return true;
             case R.id.menu_view_as_simple:
-                if (isRecentPage()) {
-                    mPreferences.setRecentLayout("simple");
-                } else if (isArtistPage()) {
+                if (isArtistPage()) {
                     mPreferences.setArtistLayout("simple");
                 } else if (isAlbumPage()) {
                     mPreferences.setAlbumLayout("simple");
@@ -278,9 +274,7 @@ public class MusicBrowserPhoneFragment extends Fragment implements
                 NavUtils.goHome(getActivity());
                 return true;
             case R.id.menu_view_as_detailed:
-                if (isRecentPage()) {
-                    mPreferences.setRecentLayout("detailed");
-                } else if (isArtistPage()) {
+                if (isArtistPage()) {
                     mPreferences.setArtistLayout("detailed");
                 } else if (isAlbumPage()) {
                     mPreferences.setAlbumLayout("detailed");
@@ -288,9 +282,7 @@ public class MusicBrowserPhoneFragment extends Fragment implements
                 NavUtils.goHome(getActivity());
                 return true;
             case R.id.menu_view_as_grid:
-                if (isRecentPage()) {
-                    mPreferences.setRecentLayout("grid");
-                } else if (isArtistPage()) {
+                if (isArtistPage()) {
                     mPreferences.setArtistLayout("grid");
                 } else if (isAlbumPage()) {
                     mPreferences.setAlbumLayout("grid");

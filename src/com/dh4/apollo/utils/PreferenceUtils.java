@@ -63,9 +63,6 @@ public final class PreferenceUtils {
     // Sets the type of layout to use for the album list
     public static final String ALBUM_LAYOUT = "album_layout";
 
-    // Sets the type of layout to use for the recent list
-    public static final String RECENT_LAYOUT = "recent_layout";
-
     // Key used to download images only on Wi-Fi
     public static final String ONLY_ON_WIFI = "only_on_wifi";
 
@@ -345,15 +342,6 @@ public final class PreferenceUtils {
      */
     public void setAlbumLayout(final String value) {
         setLayoutType(ALBUM_LAYOUT, value);
-    }
-
-    /**
-     * Sets the layout type for the recent list
-     * 
-     * @param value The new layout type
-     */
-    public void setRecentLayout(final String value) {
-        setLayoutType(RECENT_LAYOUT, value);
     }
 
     /**

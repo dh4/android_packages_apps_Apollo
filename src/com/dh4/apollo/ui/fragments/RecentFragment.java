@@ -11,9 +11,8 @@
 
 package com.dh4.apollo.ui.fragments;
 
-import static com.dh4.apollo.utils.PreferenceUtils.RECENT_LAYOUT;
-
 import android.app.Activity;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
@@ -31,27 +30,23 @@ import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.dh4.apollo.Config;
 import com.dh4.apollo.MusicStateListener;
 import com.dh4.apollo.R;
-import com.dh4.apollo.adapters.AlbumAdapter;
-import com.dh4.apollo.cache.ImageFetcher;
+import com.dh4.apollo.adapters.SongAdapter;
 import com.dh4.apollo.loaders.RecentLoader;
 import com.dh4.apollo.menu.CreateNewPlaylist;
 import com.dh4.apollo.menu.DeleteDialog;
 import com.dh4.apollo.menu.FragmentMenuItems;
-import com.dh4.apollo.model.Album;
+import com.dh4.apollo.model.Song;
 import com.dh4.apollo.provider.RecentStore;
 import com.dh4.apollo.recycler.RecycleHolder;
 import com.dh4.apollo.ui.activities.BaseActivity;
-import com.dh4.apollo.utils.ApolloUtils;
 import com.dh4.apollo.utils.MusicUtils;
 import com.dh4.apollo.utils.NavUtils;
-import com.dh4.apollo.utils.PreferenceUtils;
 
 import java.util.List;
 
@@ -61,18 +56,13 @@ import java.util.List;
  * 
  * @author Andrew Neal (andrewdneal@gmail.com)
  */
-public class RecentFragment extends Fragment implements LoaderCallbacks<List<Album>>,
+public class RecentFragment extends Fragment implements LoaderCallbacks<List<Song>>,
         OnScrollListener, OnItemClickListener, MusicStateListener {
 
     /**
      * Used to keep context menu items from bleeding into other fragments
      */
     private static final int GROUP_ID = 1;
-
-    /**
-     * Grid view column count. ONE - list, TWO - normal grid, FOUR - landscape
-     */
-    private static final int ONE = 1, TWO = 2, FOUR = 4;
 
     /**
      * LoaderCallbacks identifier
@@ -87,12 +77,7 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
     /**
      * The adapter for the grid
      */
-    private AlbumAdapter mAdapter;
-
-    /**
-     * The grid view
-     */
-    private GridView mGridView;
+    private SongAdapter mAdapter;
 
     /**
      * The list view
@@ -100,19 +85,24 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
     private ListView mListView;
 
     /**
-     * Album song list
+     * Song list
      */
-    private long[] mAlbumList;
+    private long[] mSongList;
 
     /**
-     * Represents an album
+     * Represents an song
      */
-    private Album mAlbum;
+    private Song mSong;
 
     /**
      * True if the list should execute {@code #restartLoader()}.
      */
     private boolean mShouldRefresh = false;
+
+    /**
+     * Position of selected song
+     */
+    private int position;
 
     /**
      * {@inheritDoc}
@@ -130,15 +120,7 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        int layout = R.layout.list_item_normal;
-        if (isSimpleLayout()) {
-            layout = R.layout.list_item_normal;
-        } else if (isDetailedLayout()) {
-            layout = R.layout.list_item_detailed;
-        } else {
-            layout = R.layout.grid_items_normal;
-        }
-        mAdapter = new AlbumAdapter(getActivity(), layout);
+        mAdapter = new SongAdapter(getActivity(), R.layout.list_item_simple);
     }
 
     /**
@@ -148,13 +130,17 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
     public View onCreateView(final LayoutInflater inflater, final ViewGroup container,
             final Bundle savedInstanceState) {
         // The View for the fragment's UI
-        if (isSimpleLayout()) {
-            mRootView = (ViewGroup)inflater.inflate(R.layout.list_base, null);
-            initListView();
-        } else {
-            mRootView = (ViewGroup)inflater.inflate(R.layout.grid_base, null);
-            initGridView();
-        }
+        mRootView = (ViewGroup)inflater.inflate(R.layout.list_base, null);
+        // Initialize the list
+        mListView = (ListView)mRootView.findViewById(R.id.list_base);
+        // Set the data behind the list
+        mListView.setAdapter(mAdapter);
+        // Release any references to the recycled Views
+        mListView.setRecyclerListener(new RecycleHolder());
+        // Listen for ContextMenus to be created
+        mListView.setOnCreateContextMenuListener(this);
+        // Play the selected song
+        mListView.setOnItemClickListener(this);
         return mRootView;
     }
 
@@ -176,7 +162,6 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
     @Override
     public void onPause() {
         super.onPause();
-        mAdapter.flush();
     }
 
     /**
@@ -189,20 +174,22 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
 
         // Get the position of the selected item
         final AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
-        // Create a new album
-        mAlbum = mAdapter.getItem(info.position);
-        // Create a list of the album's songs
-        mAlbumList = MusicUtils.getSongListForAlbum(getActivity(), mAlbum.mAlbumId);
+        position = info.position;
+        // Create a new song
+        mSong = mAdapter.getItem(position);
+        // Create a list of the songs
+        Cursor cursor = RecentLoader.makeRecentCursor(getActivity());
+        mSongList = MusicUtils.getSongListForCursor(cursor);
 
-        // Play the album
+        // Play the song
         menu.add(GROUP_ID, FragmentMenuItems.PLAY_SELECTION, Menu.NONE,
                 getString(R.string.context_menu_play_selection));
 
-        // Add the album to the queue
+        // Add the song to the queue
         menu.add(GROUP_ID, FragmentMenuItems.ADD_TO_QUEUE, Menu.NONE,
                 getString(R.string.add_to_queue));
 
-        // Add the album to a playlist
+        // Add the song to a playlist
         final SubMenu subMenu = menu.addSubMenu(GROUP_ID, FragmentMenuItems.ADD_TO_PLAYLIST,
                 Menu.NONE, R.string.add_to_playlist);
         MusicUtils.makePlaylistMenu(getActivity(), GROUP_ID, subMenu, false);
@@ -225,36 +212,39 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
      */
     @Override
     public boolean onContextItemSelected(final MenuItem item) {
+        // Add song to it's own list
+        long[] selectedSong = new long[1];
+        selectedSong[0] = mSongList[position];
+
         // Avoid leaking context menu selections
         if (item.getGroupId() == GROUP_ID) {
             switch (item.getItemId()) {
                 case FragmentMenuItems.PLAY_SELECTION:
-                    MusicUtils.playAll(getActivity(), mAlbumList, 0, false);
+                    MusicUtils.playAll(getActivity(), mSongList, position, false);
                     return true;
                 case FragmentMenuItems.ADD_TO_QUEUE:
-                    MusicUtils.addToQueue(getActivity(), mAlbumList);
+                    MusicUtils.addToQueue(getActivity(), selectedSong);
                     return true;
                 case FragmentMenuItems.NEW_PLAYLIST:
-                    CreateNewPlaylist.getInstance(mAlbumList).show(getFragmentManager(),
+                    CreateNewPlaylist.getInstance(selectedSong).show(getFragmentManager(),
                             "CreatePlaylist");
                     return true;
                 case FragmentMenuItems.MORE_BY_ARTIST:
-                    NavUtils.openArtistProfile(getActivity(), mAlbum.mArtistName);
+                    NavUtils.openArtistProfile(getActivity(), mSong.mArtistName);
                     return true;
                 case FragmentMenuItems.PLAYLIST_SELECTED:
                     final long id = item.getIntent().getLongExtra("playlist", 0);
-                    MusicUtils.addToPlaylist(getActivity(), mAlbumList, id);
+                    MusicUtils.addToPlaylist(getActivity(), selectedSong, id);
                     return true;
                 case FragmentMenuItems.REMOVE_FROM_RECENT:
                     mShouldRefresh = true;
-                    RecentStore.getInstance(getActivity()).removeItem(mAlbum.mAlbumId);
+                    RecentStore.getInstance(getActivity()).removeItem(mSong.mSongId);
                     MusicUtils.refresh();
                     return true;
                 case FragmentMenuItems.DELETE:
                     mShouldRefresh = true;
-                    final String album = mAlbum.mAlbumName;
-                    DeleteDialog.newInstance(album, mAlbumList,
-                            ImageFetcher.generateAlbumCacheKey(album, mAlbum.mArtistName))
+                    final String song = mSong.mSongName;
+                    DeleteDialog.newInstance(song, mSongList, song + Config.ALBUM_ART_SUFFIX)
                             .show(getFragmentManager(), "DeleteDialog");
                     return true;
                 default:
@@ -269,14 +259,6 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
      */
     @Override
     public void onScrollStateChanged(final AbsListView view, final int scrollState) {
-        // Pause disk cache access to ensure smoother scrolling
-        if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING
-                || scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-            mAdapter.setPauseDiskCache(true);
-        } else {
-            mAdapter.setPauseDiskCache(false);
-            mAdapter.notifyDataSetChanged();
-        }
     }
 
     /**
@@ -285,15 +267,18 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
     @Override
     public void onItemClick(final AdapterView<?> parent, final View view, final int position,
             final long id) {
-        mAlbum = mAdapter.getItem(position);
-        NavUtils.openAlbumProfile(getActivity(), mAlbum.mAlbumName, mAlbum.mArtistName, mAlbum.mAlbumId);
+        Cursor cursor = RecentLoader.makeRecentCursor(getActivity());
+        final long[] list = MusicUtils.getSongListForCursor(cursor);
+        MusicUtils.playAll(getActivity(), list, position, false);
+        cursor.close();
+        cursor = null;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Loader<List<Album>> onCreateLoader(final int id, final Bundle args) {
+    public Loader<List<Song>> onCreateLoader(final int id, final Bundle args) {
         return new RecentLoader(getActivity());
     }
 
@@ -301,25 +286,21 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
      * {@inheritDoc}
      */
     @Override
-    public void onLoadFinished(final Loader<List<Album>> loader, final List<Album> data) {
+    public void onLoadFinished(final Loader<List<Song>> loader, final List<Song> data) {
         // Check for any errors
         if (data.isEmpty()) {
             // Set the empty text
             final TextView empty = (TextView)mRootView.findViewById(R.id.empty);
-            empty.setText(getString(R.string.empty_recent));
-            if (isSimpleLayout()) {
-                mListView.setEmptyView(empty);
-            } else {
-                mGridView.setEmptyView(empty);
-            }
+            empty.setText(getString(R.string.empty_music));
+            mListView.setEmptyView(empty);
             return;
         }
 
         // Start fresh
         mAdapter.unload();
         // Add the data to the adpater
-        for (final Album album : data) {
-            mAdapter.add(album);
+        for (final Song song : data) {
+            mAdapter.add(song);
         }
         // Build the cache
         mAdapter.buildCache();
@@ -329,7 +310,7 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
      * {@inheritDoc}
      */
     @Override
-    public void onLoaderReset(final Loader<List<Album>> loader) {
+    public void onLoaderReset(final Loader<List<Song>> loader) {
         // Clear the data in the adapter
         mAdapter.unload();
     }
@@ -361,71 +342,5 @@ public class RecentFragment extends Fragment implements LoaderCallbacks<List<Alb
     @Override
     public void onMetaChanged() {
         getLoaderManager().restartLoader(LOADER, null, this);
-    }
-
-    /**
-     * Sets up various helpers for both the list and grid
-     * 
-     * @param list The list or grid
-     */
-    private void initAbsListView(final AbsListView list) {
-        // Release any references to the recycled Views
-        list.setRecyclerListener(new RecycleHolder());
-        // Listen for ContextMenus to be created
-        list.setOnCreateContextMenuListener(this);
-        // Show the albums and songs from the selected artist
-        list.setOnItemClickListener(this);
-        // To help make scrolling smooth
-        list.setOnScrollListener(this);
-    }
-
-    /**
-     * Sets up the list view
-     */
-    private void initListView() {
-        // Initialize the grid
-        mListView = (ListView)mRootView.findViewById(R.id.list_base);
-        // Set the data behind the list
-        mListView.setAdapter(mAdapter);
-        // Set up the helpers
-        initAbsListView(mListView);
-        mAdapter.setTouchPlay(true);
-    }
-
-    /**
-     * Sets up the grid view
-     */
-    private void initGridView() {
-        // Initialize the grid
-        mGridView = (GridView)mRootView.findViewById(R.id.grid_base);
-        // Set the data behind the grid
-        mGridView.setAdapter(mAdapter);
-        // Set up the helpers
-        initAbsListView(mGridView);
-        if (ApolloUtils.isLandscape(getActivity())) {
-            if (isDetailedLayout()) {
-                mAdapter.setLoadExtraData(true);
-                mGridView.setNumColumns(TWO);
-            } else {
-                mGridView.setNumColumns(FOUR);
-            }
-        } else {
-            if (isDetailedLayout()) {
-                mAdapter.setLoadExtraData(true);
-                mGridView.setNumColumns(ONE);
-            } else {
-                mGridView.setNumColumns(TWO);
-            }
-        }
-    }
-
-    private boolean isSimpleLayout() {
-        return PreferenceUtils.getInstance(getActivity()).isSimpleLayout(RECENT_LAYOUT,
-                getActivity());
-    }
-
-    private boolean isDetailedLayout() {
-        return PreferenceUtils.getInstance(getActivity()).isDetailedLayout(RECENT_LAYOUT,
-                getActivity());
     }
 }
