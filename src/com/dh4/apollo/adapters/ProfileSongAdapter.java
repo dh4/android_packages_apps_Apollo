@@ -97,18 +97,25 @@ public class ProfileSongAdapter extends ArrayAdapter<Song> {
     private final String SEPARATOR_STRING = " - ";
 
     /**
+     * In {@link PlaylistSongFragment} show artist instead of album on line two
+     */
+    private final boolean mShowArtist;
+
+    /**
      * Used to set the size of the data in the adapter
      */
     private List<Song> mCount = Lists.newArrayList();
 
     /**
      * Constructor of <code>ProfileSongAdapter</code>
-     * 
+     *
      * @param context The {@link Context} to use
      * @param layoutId The resource Id of the view to inflate.
      * @param setting defines the content of the second line
+     * @param showArtist True to show artist instead of album
      */
-    public ProfileSongAdapter(final Context context, final int layoutId, final int setting) {
+    public ProfileSongAdapter(final Context context, final int layoutId, final int setting,
+            final boolean showArtist) {
         super(context, 0);
         // Used to create the custom layout
         mInflater = LayoutInflater.from(context);
@@ -118,6 +125,20 @@ public class ProfileSongAdapter extends ArrayAdapter<Song> {
         mLayoutId = layoutId;
         // Know what to put in line two
         mDisplaySetting = setting;
+        // Show artist instead of album
+        mShowArtist = showArtist;
+
+    }
+
+    /**
+     * Constructor of <code>ProfileSongAdapter</code>
+     *
+     * @param context The {@link Context} to use
+     * @param layoutId The resource Id of the view to inflate.
+     * @param setting defines the content of the second line
+     */
+    public ProfileSongAdapter(final Context context, final int layoutId, final int setting) {
+        this(context, layoutId, setting, false);
     }
 
     /**
@@ -127,7 +148,7 @@ public class ProfileSongAdapter extends ArrayAdapter<Song> {
      * @param layoutId The resource Id of the view to inflate.
      */
     public ProfileSongAdapter(final Context context, final int layoutId) {
-        this(context, layoutId, DISPLAY_DEFAULT_SETTING);
+        this(context, layoutId, DISPLAY_DEFAULT_SETTING, false);
     }
 
     /**
@@ -177,8 +198,6 @@ public class ProfileSongAdapter extends ArrayAdapter<Song> {
                 }
 
                 final StringBuilder sb = new StringBuilder(song.mArtistName);
-                sb.append(SEPARATOR_STRING);
-                sb.append(song.mAlbumName);
                 holder.mLineTwo.get().setText(sb.toString());
                 break;
             case DISPLAY_DEFAULT_SETTING:
@@ -187,7 +206,11 @@ public class ProfileSongAdapter extends ArrayAdapter<Song> {
 
                 holder.mLineOneRight.get().setText(
                         MusicUtils.makeTimeString(getContext(), song.mDuration));
-                holder.mLineTwo.get().setText(song.mAlbumName);
+
+                if (mShowArtist)
+                    holder.mLineTwo.get().setText(song.mArtistName);
+                else
+                    holder.mLineTwo.get().setText(song.mAlbumName);
                 break;
         }
         return convertView;

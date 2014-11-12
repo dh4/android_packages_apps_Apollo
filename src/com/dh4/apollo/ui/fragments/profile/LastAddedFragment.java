@@ -131,7 +131,8 @@ public class LastAddedFragment extends Fragment implements LoaderCallbacks<List<
         mAdapter = new ProfileSongAdapter(
                 getActivity(),
                 R.layout.list_item_simple,
-                ProfileSongAdapter.DISPLAY_PLAYLIST_SETTING
+                ProfileSongAdapter.DISPLAY_PLAYLIST_SETTING,
+                true
         );
     }
 

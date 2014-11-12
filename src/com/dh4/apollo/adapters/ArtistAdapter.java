@@ -157,10 +157,10 @@ public class ArtistAdapter extends ArrayAdapter<Artist> {
             mData[i].mLineOne = artist.mArtistName;
             // Number of albums (line two)
             mData[i].mLineTwo = MusicUtils.makeLabel(getContext(),
-                    R.plurals.Nalbums, artist.mAlbumNumber);
+                    R.plurals.Nsongs, artist.mSongNumber);
             // Number of songs (line three)
             mData[i].mLineThree = MusicUtils.makeLabel(getContext(),
-                    R.plurals.Nsongs, artist.mSongNumber);
+                    R.plurals.Nalbums, artist.mAlbumNumber);
         }
     }
 
